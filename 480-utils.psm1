@@ -54,3 +54,41 @@ Function Select-VM([string] $folder)
         Write-Host "Invalid Folder: $folder" -ForegroundColor "Red"
     }
 }
+
+function Clone-VM([PSObject] $vm, [string] $cloneName, [string] $esxiHost, [string] $datastore, [string] $networkName, [bool] $powerOn) {
+    try {
+        $snapshot = Get-Snapshot -VM $vm | Where-Object { $_.Name -eq "BASE" }
+        if (-not $snapshot) {
+            Write-Host "Base snapshot not found. Please ensure a base snapshot exists." -ForegroundColor Red
+            return
+        }
+
+        $cloneSpec = New-Object VMware.Vim.VirtualMachineCloneSpec
+        $cloneSpec.Location = New-Object VMware.Vim.VirtualMachineRelocateSpec
+        $cloneSpec.Location.Datastore = (Get-Datastore -Name $datastore).Id
+        $cloneSpec.Location.Host = (Get-VMHost -Name $esxiHost).Id
+        $cloneSpec.PowerOn = $powerOn
+        $cloneSpec.Template = $false
+
+        $linkedClone = $false
+        Read-Host "Do you want to create a Full clone? (Y/N)" | ForEach-Object {
+            if ($_ -eq "Y") {
+                $cloneSpec.Location.DiskMoveType = "moveAllDiskBackingsAndDisallowSharing"
+            } else {
+                $cloneSpec.Snapshot = $snapshot.Id
+                $linkedClone = $true
+            }
+        }
+
+        $newVM = $vm | New-VM -Name $cloneName -VMHost $esxiHost -Datastore $datastore -Location (Get-Folder -Name $vm.Folder.Name) -CloneSpec $cloneSpec
+        Write-Host "Clone created successfully: $cloneName" -ForegroundColor Green
+
+        if ($linkedClone -and $networkName) {
+            $newVM | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $networkName -Confirm:$false
+            Write-Host "Network adapter set to $networkName" -ForegroundColor Green
+        }
+
+    } catch {
+        Write-Host "Error cloning VM: $_" -ForegroundColor Red
+    }
+}
