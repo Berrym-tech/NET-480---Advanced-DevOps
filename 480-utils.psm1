@@ -54,8 +54,8 @@ Function Select-VM([string] $folder)
         Write-Host "Invalid Folder: $folder" -ForegroundColor "Red"
     }
 }
-
-function FullClone {
+function LinkedClone()
+{
     param (
         [Parameter(Mandatory=$true)]
         [string] $SnapshotName,
@@ -63,12 +63,12 @@ function FullClone {
         [string] $VMRenamed,
         [string] $TargetVMHost = "192.168.7.12",
         [string] $TargetDatastore = "datastore1",
-        [string] $VMFolder
+        [string] $vm_folder = "BASEVM"
     )
     begin {
         # Prompt user to select a VM from the specified folder
-        $SourceVM = Select-VM -folder $VMFolder
-        if ($SourceVM -eq $null) {
+        $SourceVM = Select-VM -folder $vm_folder
+        if ($null -eq $SourceVM) {
             Write-Host "No VM selected or found. Exiting function." -ForegroundColor Red
             return
         }
