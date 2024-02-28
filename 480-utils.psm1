@@ -55,18 +55,24 @@ Function Select-VM([string] $folder)
     }
 }
 
-function Clone-VM {
+function FullClone {
     param (
-        [Parameter(Mandatory=$true)]
-        [string] $SourceVMName,
         [Parameter(Mandatory=$true)]
         [string] $SnapshotName,
         [Parameter(Mandatory=$true)]
         [string] $VMRenamed,
         [string] $TargetVMHost = "192.168.7.12",
-        [string] $TargetDatastore = "datastore1"
+        [string] $TargetDatastore = "datastore1",
+        [string] $VMFolder
     )
     begin {
+        # Prompt user to select a VM from the specified folder
+        $SourceVM = Select-VM -folder $VMFolder
+        if ($SourceVM -eq $null) {
+            Write-Host "No VM selected or found. Exiting function." -ForegroundColor Red
+            return
+        }
+        $SourceVMName = $SourceVM.Name
         Write-Host "Source VM: $SourceVMName"
         Write-Host "Snapshot: $SnapshotName"
         Write-Host "The New VM Name is: $VMRenamed"
@@ -75,7 +81,7 @@ function Clone-VM {
     }
     process {
         try {
-            # Retrieve the source VM
+            # Retrieve the source VM based on user selection
             $vm = Get-VM -Name $SourceVMName -ErrorAction Stop
             # Find the specified snapshot
             $snapshot = Get-Snapshot -VM $vm -Name $SnapshotName -ErrorAction Stop
