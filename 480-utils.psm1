@@ -55,40 +55,48 @@ Function Select-VM([string] $folder)
     }
 }
 
-function Clone-VM([PSObject] $vm, [string] $cloneName, [string] $esxiHost, [string] $datastore, [string] $networkName, [bool] $powerOn) {
-    try {
-        $snapshot = Get-Snapshot -VM $vm | Where-Object { $_.Name -eq "BASE" }
-        if (-not $snapshot) {
-            Write-Host "Base snapshot not found. Please ensure a base snapshot exists." -ForegroundColor Red
-            return
+function Clone-VM {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string] $SourceVMName,
+        [Parameter(Mandatory=$true)]
+        [string] $SnapshotName,
+        [Parameter(Mandatory=$true)]
+        [string] $VMRenamed,
+        [string] $TargetVMHost = "192.168.7.12",
+        [string] $TargetDatastore = "datastore1"
+    )
+    begin {
+        Write-Host "Source VM: $SourceVMName"
+        Write-Host "Snapshot: $SnapshotName"
+        Write-Host "The New VM Name is: $VMRenamed"
+        Write-Host "Target Host: $TargetVMHost"
+        Write-Host "Target Datastore: $TargetDatastore"
+    }
+    process {
+        try {
+            # Retrieve the source VM
+            $vm = Get-VM -Name $SourceVMName -ErrorAction Stop
+            # Find the specified snapshot
+            $snapshot = Get-Snapshot -VM $vm -Name $SnapshotName -ErrorAction Stop
+            # Get the target host and datastore
+            $vmhost = Get-VMHost -Name $TargetVMHost -ErrorAction Stop
+            $ds = Get-DataStore -Name $TargetDatastore -ErrorAction Stop
+            # Create a linked clone from the snapshot
+            $linkedCloneName = "{0}.linked" -f $vm.name
+            $linkedVM = New-VM -LinkedClone -Name $linkedCloneName -VM $vm -ReferenceSnapshot $snapshot -VMHost $vmhost -Datastore $ds -ErrorAction Stop
+            # Create a new VM from the linked clone
+            $newvm = New-VM -Name "$VMRenamed.base" -VM $linkedVM -VMHost $vmhost -Datastore $ds -ErrorAction Stop
+            # Create a snapshot of the new VM
+            $newvm | New-Snapshot -Name "Base" -ErrorAction Stop
+            Write-Host "Clone operation completed successfully."
         }
-
-        $cloneSpec = New-Object VMware.Vim.VirtualMachineCloneSpec
-        $cloneSpec.Location = New-Object VMware.Vim.VirtualMachineRelocateSpec
-        $cloneSpec.Location.Datastore = (Get-Datastore -Name $datastore).Id
-        $cloneSpec.Location.Host = (Get-VMHost -Name $esxiHost).Id
-        $cloneSpec.PowerOn = $powerOn
-        $cloneSpec.Template = $false
-
-        $linkedClone = $false
-        Read-Host "Do you want to create a Full clone? (Y/N)" | ForEach-Object {
-            if ($_ -eq "Y") {
-                $cloneSpec.Location.DiskMoveType = "moveAllDiskBackingsAndDisallowSharing"
-            } else {
-                $cloneSpec.Snapshot = $snapshot.Id
-                $linkedClone = $true
-            }
+        catch {
+            Write-Host "ERROR: $_"
+            exit
         }
-
-        $newVM = $vm | New-VM -Name $cloneName -VMHost $esxiHost -Datastore $datastore -Location (Get-Folder -Name $vm.Folder.Name) -CloneSpec $cloneSpec
-        Write-Host "Clone created successfully: $cloneName" -ForegroundColor Green
-
-        if ($linkedClone -and $networkName) {
-            $newVM | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $networkName -Confirm:$false
-            Write-Host "Network adapter set to $networkName" -ForegroundColor Green
-        }
-
-    } catch {
-        Write-Host "Error cloning VM: $_" -ForegroundColor Red
+    }
+    end {
+        Write-Host "Function execution completed."
     }
 }
