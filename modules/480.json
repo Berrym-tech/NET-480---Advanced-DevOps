@@ -1,0 +1,7 @@
+{
+    "vcenter_server" : "vcenter.maxwell.local",
+    "vm_folder" : "BASEVM",
+    "vm_folder_prod" : "PROD",
+    "esxi_host" : "192.168.7.12",
+    "default_network" : "480-WAN"
+}
