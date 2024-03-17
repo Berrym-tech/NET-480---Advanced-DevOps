@@ -55,43 +55,6 @@ Function Select-VM([string] $folder)
     }
 }
 
-function Show-Menu {
-    while ($true) {
-        Write-Host "1: Linked Clone"
-        Write-Host "2: New Network"
-        Write-Host "3: Get IP"
-        Write-Host "Q: Quit"
-
-        $selection = Read-Host "Please select an option"
-
-        switch ($selection) {
-            '1' {
-                # Parameters can be asked from the user or hardcoded
-                LinkedClone
-            }
-            '2' {
-                # Ask for necessary parameters or use default values
-                New-Network
-            }
-            '3' {
-                # Ask for the VM name
-                $vmName = Read-Host "Enter VM name"
-                $ipInfo = Get-IP -VMName $vmName
-                Write-Host "IP Info: $($ipInfo | Out-String)"
-            }
-            'Q', 'q' {
-                Write-Host "Exiting..."
-                break
-            }
-            default {
-                Write-Host "Invalid option, please try again."
-            }
-        }
-    }
-}
-# Start the script
-Show-Menu
-
 function LinkedClone()
 {
     param (
@@ -142,35 +105,5 @@ function LinkedClone()
     }
     end {
         Write-Host "Function execution completed."
-    }
-    function New-Network {
-    param(
-        [string]$SwitchName,
-        [string]$PortGroupName,
-        [string]$VirtualSwitchType = 'Standard'
-    )
-    # Create a new Virtual Switch
-    $vSwitch = New-VirtualSwitch -Name $SwitchName -Type $VirtualSwitchType
-    # Create a new Virtual Port Group on the created Virtual Switch
-    New-VirtualPortGroup -VirtualSwitch $vSwitch -Name $PortGroupName
-
-    Write-Output "Virtual Switch and Port Group created successfully."
-    }
-    function Get-IP {
-    param(
-        [string]$VMName
-    )
-    # Get the specified VM object
-    $vm = Get-VM -Name $VMName
-    # Get network adapter information
-    $networkAdapter = Get-NetworkAdapter -VM $vm | Select-Object -First 1
-
-    $vmInfo = @{
-        VMName = $VMName
-        IPAddress = $vm.Guest.IpAddress[0]
-        MACAddress = $networkAdapter.MacAddress
-    }
-
-    return $vmInfo
     }
 }
