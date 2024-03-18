@@ -21,7 +21,8 @@ Function Choice($conf){
     Select an Option 1-4:
     [1] Linked Clone
     [2] Create a New V Network
-    [3] Get System Information
+    [3] Get IP
+    [4] Start / Stop VM
     [5] Exit
     "
     $choice = Read-Host "Choose or Lose: "
@@ -42,11 +43,11 @@ Function Choice($conf){
                 }
                 '4' {
                     Clear-Host
-                    Break
+                    Start-Stop($conf)
                 }
                 '5' {
                     Clear-Host
-                    Start-Stop($conf)
+                    Break
                 }
                 Default {Write-Host "Wrong"}
             }
