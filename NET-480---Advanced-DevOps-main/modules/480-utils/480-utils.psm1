@@ -161,7 +161,7 @@ Function New-Network($conf)
         } catch {
             Write-Host "Port Group creation failed" -ForegroundColor Red
         }
-        } catch {
+    } catch {
             Write-Host "Vswitch creation failed" -ForegroundColor Red
         }
 }
