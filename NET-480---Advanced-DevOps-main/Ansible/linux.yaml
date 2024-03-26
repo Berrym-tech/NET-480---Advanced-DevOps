@@ -1,0 +1,36 @@
+linux:
+  hosts:
+  children:
+    rocky:
+      hosts:
+        10.0.5.75:
+          hostname: Rocky1
+          lan_ip: 10.0.5.10
+        10.0.5.76:
+          hostname: Rocky2
+          lan_ip: 10.0.5.11
+        10.0.5.77:
+          hostname: Rocky3
+          lan_ip: 10.0.5.12
+      vars:
+        device: "{{ ansible_default_ipv4.interface }}"
+
+    ubuntu:
+      hosts:
+        10.0.5.78:
+          hostname: ubuntu1
+          lan_ip: 10.0.5.20
+        10.0.5.79:
+          hostname: ubuntu2
+          lan_ip: 10.0.5.21
+      vars:
+        ansible_user: maxwell
+
+  vars:
+    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDLFxrw32Zm1yEpcuk8fZb8Gp/Cg70DOfdwE1o32C+ddJSy/Suu9nF4IxtXF+wxjeRT/1+1PjzEFqai9XsGbX+SSkze2973gd8r/BtsbqlG2sWpDjJkBAKxyfhIDUlwi4N/9KtYSzt7C9MDnykT6WnK9E1sjJ95HWatlAjwAzVJxrUYhuR4olKkEERPSmNiEiohl3lCcfhXDRQOfqTPafxSioyiEmjv8FBcSIuLBMLFMUg1aQILPL7zMfeIoFGfvjT4zNI134ON0I2MLWPHobUp8iUffp7VracEbhbmMm1tOo0VaT+mWD0U1El67+h7ni7gvqjyWOCP6wjRiCPPNndoKZgx7xLL4ykA1rnFjh/xbW9VRVTfoujqHfH+qD1fuGaskpO0J3AREFY7YofovHXsxLTlv9Z6hU1WvTFZ+rTTCE2fD7Cb2jJnS/xBag5CcBL8WeSbzq79bQnwoY1MI5UbwyR0ihcZv5YobbEJWbZgpSALoZfBDPqG2DaS6lxFZwQOBv4sbHj+buCXtRcf1iZmW5zzpxrpUglhFH8sFlBS+wTX69Mylqf+gbFlIwGG26LWhhHSsJf3IYVEHnxSXERCMzxZsExQwWbFr9sLoKrjmGN3NqoZRFQ/zr+xr91ZVJG760G5eS+kYNOh4wah2vIRGlwN+6ydI5bohK/wdg1ieQ== maxwell@maxwell-virtual-machine
+maxwell@maxwell-virtual-machine:~$"
+    ansible_user: Maxwell
+    prefix: 24
+    gateway: 10.0.5.2
+    name_server: 10.0.5.5
+    domain: blue.local
