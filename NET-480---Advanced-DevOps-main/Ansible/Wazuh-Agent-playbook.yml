@@ -1,0 +1,26 @@
+- name: Wazuh Agent Configuration
+  hosts: rocky
+  become: true
+  tasks:
+    - name: GPG Keys
+      rpm_key: 
+        key: "https://packages.wazuh.com/key/GPG-KEY-WAZUH"
+        state: present
+    - name: Install Wazuh agent package
+      yum:
+        name: "https://packages.wazuh.com/4.x/yum/wazuh-agent-4.3.11-1.x86_64.rpm"
+        state: present
+      environment:
+        WAZUH_MANAGER: "10.0.5.84"
+        WAZUH_AGENT_GROUP: "default"
+    - name: Allow port 1514, 1515, 55000 through firewalld
+      become: yes
+      shell: firewall-cmd --permanent --add-port=1514/tcp && firewall-cmd --permanent --add-port=1515/tcp && firewall-cmd --permanent --add-port=55000/tcp && firewall-cmd --reload
+    - name: Enable and Start Wazuh Agent
+      become: yes
+      shell: systemctl start wazuh-agent
+    - name: Bounce The Box
+      shell: "sleep 5 && restart -r"
+      become: yes
+      async: 1
+      poll: 0
