@@ -1,7 +1,7 @@
 - name: Wazuh Server Config Setup
   hosts: WazuhServer
   tasks:
-    - name: Allow Ports
+    - name: Allow port 443 (https)
       shell: 'firewall-cmd --permanent --add-port=443/tcp && firewall-cmd --permanent --add-port=55000/tcp && firewall-cmd --permanent --add-port=1515/tcp && firewall-cmd --permanent --add-port=1514/tcp'
       become: yes
 
