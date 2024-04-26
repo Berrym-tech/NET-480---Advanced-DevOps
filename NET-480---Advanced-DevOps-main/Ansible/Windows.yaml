@@ -1,0 +1,12 @@
+windows:
+  hosts:
+  children:
+    dc:
+      hosts:
+        10.0.5.5:
+          hostname: DC-BLUE1
+  
+  vars:
+    ansible_user: Administrator
+    ansible_password: "{{ admin_password}}"
+    ansible_shell_type: powershell

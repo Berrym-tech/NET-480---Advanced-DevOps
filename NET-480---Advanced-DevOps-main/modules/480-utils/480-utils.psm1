@@ -25,7 +25,8 @@ Function Choice($conf)
     [3] Get IP
     [4] Start / Stop VM
     [5] Set-Network
-    [6] Exit
+    [6] Set-IP
+    [7] Exit
     "
     $choice = Read-Host "Choose or Lose: "
 
@@ -53,12 +54,15 @@ Function Choice($conf)
                 }
                 '6' {
                     Clear-Host
+                    Set-IP($conf)
+                }
+                '7' {
+                    Clear-Host
                     Break
                 }
                 Default {Write-Host "Wrong"}
             }
 }
-
 function Get-480Config([string] $config_path) 
 {
     $conf=$null
@@ -165,7 +169,6 @@ Function New-Network($conf)
             Write-Host "Vswitch creation failed" -ForegroundColor Red
         }
 }
-
 Function Get-IP($conf)
 {
     Write-Host "Name a VM:"
@@ -212,7 +215,7 @@ function Set-Network()
 {
     try {
         Write-Host "Choose a VM to change a Network adapter on:"
-        Get-VM -Location $conf.vm_folder_PROD | Select-Object Name -ExpandProperty Name
+        Get-VM -Location $conf.vm_folder_blue | Select-Object Name -ExpandProperty Name
         $vm = Read-Host "Select a VM: "
         Get-VirtualNetwork
         $network = Read-Host "Select A Network: "
@@ -222,4 +225,33 @@ function Set-Network()
     } catch {
         Write-Host "Error"
        }
+}
+function Set-IP()
+{
+    Write-Host = "List VMs"
+    Get-VM -Location $conf.vm_folder_blue | Select-Object Name -ExpandProperty Name
+    $vm = Read-Host "Select a VM: "
+    $username = Read-Host "Username: "
+    $password = Read-Host -AsSecureString "Password: "
+    $ip = Read-Host "IP Address: "
+    $netmask = Read-Host "Netmask (Example 255.255.255.0): "
+    $gateway = Read-Host "Gateway: "
+    $dns = Read-Host "DNS Server: "
+    Invoke-VMScript -ScriptText "Get-NetAdapter | Select-Object Name" -VM $vm -GuestUser $username -GuestPassword $password
+    $message = "Network Adapter is {0}, Type Yes if the Network Adapter is Correct, Type No to change Network Adapters" -f $conf.Winadapter
+    try{
+    $Winadapter = Read-Host -Prompt $message
+        If ($Winadapter = "Yes"){
+            $Winadapter = $conf.Winadapter
+        } else {
+            $Winadapter = Read-Host -Prompt "Enter the Network Adapter you want to use: "
+        } 
+    } catch {
+        Write-Host "Network Adapter name is wrong"
+        Break
+    }
+    $sleep = "netsh interface ipv4 set address '$Winadapter' static $ip $netmask $gateway"
+    $slumber = "netsh interface ipv4 add dnsserver '$Winadapter' $dns index=2"
+    Invoke-VMScript -ScriptText $sleep -VM $vm -GuestUser $username -GuestPassword $password
+    Invoke-VMScript -ScriptText $slumber -VM $vm -GuestUser $username -GuestPassword $password
 }

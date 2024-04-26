@@ -5,7 +5,7 @@ $conf = Get-480Config -config_path "/home/maxwell/Desktop/NET-480---Advanced-Dev
 480Connect -server $conf.vcenter_server
 Choice($conf)
 # Write-Host "Selecting a VM"
-# Select-VM -folder "PROD"
+# Select-VM -folder "BASEVM"
 # LinkedClone
 # New-Network
 # Get-IP

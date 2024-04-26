@@ -1,0 +1,49 @@
+- name: Deploy ADDS
+  hosts: windows
+  gather_facts: yes
+  vars_prompt:
+    - name: "admin_password"
+      prompt: "Enter Local Administrator Password:"
+      private: yes
+
+  tasks:
+    - name: Set Local Administrator Password
+      win_user:
+        name: Administrator
+        password: "{{ admin_password }}"
+        update_password: on_create
+
+    - name: Set The Hostname For The Domain Controller
+      win_hostname:
+        name: DC-BLUE1
+      register: hostname_result
+
+    - name: Reboot for Hostname
+      win_reboot:
+    
+    - name: Add Feature
+      win_feature:
+        name: AD-Domain-Services
+
+    - name: Create A New Forest & Domain
+      win_domain:
+        dns_domain_name: "blue.local"
+        safe_mode_password: "{{ admin_password }}"
+        local_admin_password: "{{ admin_password }}"
+      register: domain_install
+
+    - name: Reboot after creating the forest
+      win_reboot:
+
+    - name: Add DNS Server Forwarder
+      win_shell: Add-DnsServerForwarder -IPAddress 10.0.5.2
+
+    - name: OU Structure
+      win_shell: |
+        Import-Module ActiveDirectory
+        New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Groups" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"

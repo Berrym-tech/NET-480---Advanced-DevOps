@@ -2,7 +2,9 @@
     "vcenter_server" : "vcenter.maxwell.local",
     "vm_folder" : "BASEVM",
     "vm_folder_prod" : "PROD",
+    "vm_folder_blue" : "BLUEX",
     "esxi_host" : "192.168.7.12",
     "default_network" : "480-WAN",
-    "datastore" : "datastore1"
+    "datastore" : "datastore1",
+    "Winadapter" : "Ethernet0"
 }
