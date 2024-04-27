@@ -24,7 +24,12 @@
     - name: Add Feature
       win_feature:
         name: AD-Domain-Services
-
+        state: present
+        include_management_tools: yes
+      register: adinstall
+    - debug:
+      var: adinstall.exitcode
+      
     - name: Create A New Forest & Domain
       win_domain:
         dns_domain_name: "blue.local"
@@ -44,26 +49,12 @@
         state: present
        become: yes
 
-    - name: Import Active Directory Module and Create OU Structure
-      win_shell: |
-        $ErrorActionPreference = 'Stop'  # Stop on errors
-        Import-Module ActiveDirectory
-        New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local"
-        New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
-        New-ADOrganizationalUnit -Name "Groups" -Path "OU=blue1,DC=blue,DC=local"
-        New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
-        New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
-        New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
-      register: ou_structure
-      failed_when: ou_structure.rc != 0
-      ignore_errors: yes
-
-    - name: Output Error from OU Structure Task
-      debug:
-        msg: "{{ ou_structure.stderr }}"
-      when: ou_structure.failed
-
-    - name: Check OU Structure Execution Success
-      fail:
-        msg: "Failed to create OUs, check error details above."
-      when: ou_structure.failed
+    - name: Organizational Unit Implementation
+      ansible.windows.win_powershell:
+        script: |
+          New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local"
+          New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
+          New-ADOrganizationalUnit -Name "Groups" -Path "OU=blue1,DC=blue,DC=local"
+          New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
+          New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
+          New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
