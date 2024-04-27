@@ -38,15 +38,15 @@
     - name: Add DNS Server Forwarder
       win_shell: Add-DnsServerForwarder -IPAddress 10.0.5.2
 
-    - name: Ensure Active Directory Module is Available
-       win_shell: |
-         if (-not(Get-Module -ListAvailable -Name ActiveDirectory)) {
-           Install-WindowsFeature RSAT-AD-PowerShell
-        }
-      ignore_errors: yes
+    - name: Ensure RSAT-AD-PowerShell is Installed
+      win_feature:
+        name: RSAT-AD-PowerShell
+        state: present
+       become: yes
 
-    - name: OU Structure
+    - name: Import Active Directory Module and Create OU Structure
       win_shell: |
+        $ErrorActionPreference = 'Stop'  # Stop on errors
         Import-Module ActiveDirectory
         New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local"
         New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
@@ -55,5 +55,15 @@
         New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
         New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
       register: ou_structure
-      failed_when: "'failed' in ou_structure.stderr"
+      failed_when: ou_structure.rc != 0
       ignore_errors: yes
+
+    - name: Output Error from OU Structure Task
+      debug:
+        msg: "{{ ou_structure.stderr }}"
+      when: ou_structure.failed
+
+    - name: Check OU Structure Execution Success
+      fail:
+        msg: "Failed to create OUs, check error details above."
+      when: ou_structure.failed
