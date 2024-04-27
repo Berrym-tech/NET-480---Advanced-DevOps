@@ -5,7 +5,7 @@
     - name: "admin_password"
       prompt: "Enter Local Administrator Password:"
       private: yes
-
+      
   tasks:
     - name: Set Local Administrator Password
       win_user:
@@ -15,20 +15,19 @@
 
     - name: Set The Hostname For The Domain Controller
       win_hostname:
-        name: DC-BLUE1
+        name: dc-blue1
       register: hostname_result
 
     - name: Reboot for Hostname
       win_reboot:
-    
+        reboot_timeout: 300
+
     - name: Add Feature
       win_feature:
         name: AD-Domain-Services
         state: present
         include_management_tools: yes
       register: adinstall
-    - debug:
-      var: adinstall.exitcode
       
     - name: Create A New Forest & Domain
       win_domain:
@@ -39,6 +38,7 @@
 
     - name: Reboot after creating the forest
       win_reboot:
+        reboot_timeout: 300
 
     - name: Add DNS Server Forwarder
       win_shell: Add-DnsServerForwarder -IPAddress 10.0.5.2
@@ -47,14 +47,23 @@
       win_feature:
         name: RSAT-AD-PowerShell
         state: present
-       become: yes
+      become_method: runas
 
-    - name: Organizational Unit Implementation
+    - name: Import AD
       ansible.windows.win_powershell:
         script: |
-          New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local"
-          New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
-          New-ADOrganizationalUnit -Name "Groups" -Path "OU=blue1,DC=blue,DC=local"
-          New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
-          New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
-          New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
+          Import-Module ActiveDirectory
+    
+    - name: Verify AD Module Import
+      ansible.windows.win_powershell:
+        script: |
+          Get-Command -Module ActiveDirectory
+
+    - name: Organizational Unit Implementation
+      win_shell: |
+        New-ADOrganizationalUnit -Name "blue1" -Path "DC=blue,DC=local" -Server "dc-blue1"
+        New-ADOrganizationalUnit -Name "Accounts" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Groups" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
+        New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"

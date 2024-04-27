@@ -4,8 +4,8 @@ windows:
     dc:
       hosts:
         10.0.5.5:
-          hostname: DC-BLUE1
-  
+          hostname: dc-blue1
+
   vars:
     ansible_user: Administrator
     ansible_password: "{{ admin_password}}"
