@@ -38,6 +38,13 @@
     - name: Add DNS Server Forwarder
       win_shell: Add-DnsServerForwarder -IPAddress 10.0.5.2
 
+    - name: Ensure Active Directory Module is Available
+       win_shell: |
+         if (-not(Get-Module -ListAvailable -Name ActiveDirectory)) {
+           Install-WindowsFeature RSAT-AD-PowerShell
+        }
+      ignore_errors: yes
+
     - name: OU Structure
       win_shell: |
         Import-Module ActiveDirectory
@@ -47,3 +54,6 @@
         New-ADOrganizationalUnit -Name "Computers" -Path "OU=blue1,DC=blue,DC=local"
         New-ADOrganizationalUnit -Name "Servers" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
         New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Computers,OU=blue1,DC=blue,DC=local"
+      register: ou_structure
+      failed_when: "'failed' in ou_structure.stderr"
+      ignore_errors: yes
